@@ -70,11 +70,41 @@ this activity adds. Keep each part short. Update it when the plan changes.
 The four routines `bench.c` expects and what each one returns. Which
 registers you preserve and why.
 
+The program implements four C-callable assembly routines:
+
+- `qsort_asm(int *arr, int n)` sorts an array of signed 32-bit integers in ascending order in place. It does not return a value.
+- `bsearch_asm(int *arr, int n, int key)` recursively searches a sorted array and returns the index of `key`, or `-1` if the key is absent.
+- `gcd_asm(int a, int b)` recursively computes the greatest common divisor of two nonnegative integers and returns the result.
+- `sum_range_asm(int lo, int hi)` returns the inclusive sum of the integers from `lo` to `hi`, provided the result fits in a signed 32-bit integer.
+
+Under the cdecl calling convention, `ebx`, `esi`, `edi`, and `ebp` are callee-saved registers. Any routine that modifies these registers must restore their original values before returning. `eax`, `ecx`, and `edx` are caller-saved, while return values are placed in `eax`.
+
 ### Solution architecture
 
 A stack frame diagram for one recursive call of `qsort_asm`, showing where
 the arguments, the return address, saved `ebp`, and the saved registers
 sit. Why `sum_range_asm` is reentrant.
+
+`qsort_asm` will serve as the C-facing entry point for sorting and will call an internal recursive quicksort routine using explicit `lo` and `hi` bounds. The recursive routine will use Lomuto partitioning, with the last element of the current range as the pivot.
+
+A recursive stack frame will contain the arguments above `ebp`, followed by the return address and saved `ebp`. Any callee-saved registers used by the routine will also be saved on the stack and restored before returning.
+
+`sum_range_asm` will be reentrant by keeping all mutable state in registers and on the stack. It will not use changing values stored in `.data` or `.bss`, so overlapping calls will not overwrite each other's state.
+
+A recursive call will use a stack frame similar to the following:
+
+```text
+Higher addresses
+[ebp+16]  third argument
+[ebp+12]  second argument
+[ebp+8]   first argument
+[ebp+4]   return address
+[ebp]     saved ebp
+[ebp-4]   saved register
+[ebp-8]   saved register
+[ebp-12]  saved register
+Lower addresses
+```
 
 ### Measurements
 
@@ -97,10 +127,10 @@ who owns it.
 
 | Week | Goal | Owner |
 |---|---|---|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | Defense | |
+| 1 | Design notes, cdecl review, repository setup, and subsystem planning | All members |
+| 2 | Complete Sorting and Searching subsystems | |
+| 3 | Complete Convention and Measurement subsystem, testing, benchmarks, and documentation | |
+| 4 | Defense | All members |
 
 ## Subsystem Ownership
 
