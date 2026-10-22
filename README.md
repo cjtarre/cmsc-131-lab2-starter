@@ -60,27 +60,31 @@ needs. Leave the rest of this file as it is.
 
 ## Design Notes
 
-Complete this section before the Week 1 progress report and finish it by
-Week 3. The syllabus asks for problem analysis, a solution architecture,
-and an estimated timeline. The manual's Deliverables section lists what
-this activity adds. Keep each part short. Update it when the plan changes.
-
 ### Problem analysis
 
-The four routines `bench.c` expects and what each one returns. Which
-registers you preserve and why.
+The four routines `bench.c` expects and what each one returns. Which registers you preserve and why.
+
+- **sum_range_asm:** `int sum_range_asm(int lo, int hi)` returns the
+  inclusive sum in `eax`. The hard part is reentrancy: bench calls
+  `bench_callback()` once per call from C, and that callback starts a second
+  `sum_range_asm` before the first finishes. Both must return correct sums
+  (500500 and 5050), so no state can live in a global.
 
 ### Solution architecture
 
-A stack frame diagram for one recursive call of `qsort_asm`, showing where
-the arguments, the return address, saved `ebp`, and the saved registers
-sit. Why `sum_range_asm` is reentrant.
+A stack frame diagram for one recursive call of `qsort_asm`, showing where the arguments, the return address, saved `ebp`, and the saved registers sit. Why `sum_range_asm` is reentrant.
+
+- **Why sum_range_asm is reentrant:** It keeps no globals. `lo`
+  and `hi` live in the call's own stack frame (`[ebp+8]`, `[ebp+12]`) and
+  the running total lives in a register or that frame, so the nested call
+  from `bench_callback()` gets its own frame and can't touch the outer
+  call's values. The callback runs once at entry, before any live value is
+  held in `eax`, `ecx` or `edx`.
 
 ### Measurements
 
 The ratio `bench` reports on `random1000.txt`, `sorted1000.txt`,
-`reverse1000.txt`, `duplicates.txt`, and `identical.txt`. Your worst case
-and its cause. One improvement and its estimated effect.
+`reverse1000.txt`, `duplicates.txt`, and `identical.txt`. Your worst case and its cause. One improvement and its estimated effect.
 
 | File | Ratio |
 |---|---|
@@ -101,7 +105,6 @@ who owns it.
 | 2 | | |
 | 3 | | |
 | 4 | Defense | |
-
 ## Subsystem Ownership
 
 Complete this section before the Week 1 progress report. The manual lists
