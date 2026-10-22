@@ -109,10 +109,10 @@ the three subsystems. Each member owns one. In a group of four, two members
 share one. The commit history must agree with this table.
 
 | Subsystem | Owner |
-|---|---|
-| Sorting (`qsort_asm` and its partition) | |
-| Searching (`bsearch_asm`, `gcd_asm`) | |
-| Convention and measurement (`sum_range_asm`, the benchmarks) | |
+|---|---| 
+| Sorting (`qsort_asm` and its partition) | Ma. Christie Jude Tarre |
+| Searching (`bsearch_asm`, `gcd_asm`) | Trisha Mae Hechenagocia & Gabrielle Sumergido |
+| Convention and measurement (`sum_range_asm`, the benchmarks) | Aleighia Keith L. Reyes |
 
 ## Quirks and Issues
 
