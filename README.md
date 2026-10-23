@@ -122,16 +122,14 @@ who owns it.
 
 | Week | Goal | Owner |
 |---|---|---|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | Defense | |
+| 1 | Repository setup, Design Notes, subsystem ownership, and working prototype | All members |
+| 2 | Complete Sorting and Searching subsystems | Ma. Christie Jude Tarre; Trisha Mae Hechenagocia & Gabrielle Sumergido |
+| 3 | Complete Convention and measurement, testing, benchmarks, and documentation | Aleighia Keith L. Reyes; All members for testing and documentation |
+| 4 | Defense | All members |
 
 ## Subsystem Ownership
 
-Complete this section before the Week 1 progress report. The manual lists
-the three subsystems. Each member owns one. In a group of four, two members
-share one. The commit history must agree with this table.
+Complete this section before the Week 1 progress report. The manual lists the three subsystems. Each member owns one. In a group of four, two members share one. The commit history must agree with this table.
 
 | Subsystem | Owner |
 |---|---| 
@@ -141,10 +139,7 @@ share one. The commit history must agree with this table.
 
 ## Quirks and Issues
 
-Complete this section before the Week 3 progress report. The syllabus asks
-for documentation of quirks and issues with the complete implementation.
-One entry per item. State what happens, what causes it, and what the group
-did about it.
+Complete this section before the Week 3 progress report. The syllabus asks for documentation of quirks and issues with the complete implementation. One entry per item. State what happens, what causes it, and what the group did about it.
 
 ### Known issues
 
