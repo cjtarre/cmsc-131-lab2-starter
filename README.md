@@ -72,6 +72,12 @@ The four routines `bench.c` expects and what each one returns. Which registers y
 
 - **bsearch_asm:** `int bsearch_asm(int *arr, int n, int key)` runs a recursive binary search on a sorted array of signed ints. It returns 0-based index of `key` in `eax`, or `-1` if the key isn't found in the array. The midpoint is computed as `lo + (hi - lo) / 2` rather than just`(lo + hi) / 2`, because the sum `lo+hi` can overflow 32 bits for very large indices, while `hi - lo` never exceeds the array size. The base case is `lo > hi`, which returns `-1` and also covers the empty array (`n=0`).
 
+- **gcd_asm**: `int gcd_asm(int a, int b)` runs a recursive Euclid algorithm to calculate the greatest common denominator of two nonnegative integers. It keeps track of the total recursive depth with an exported global variable `gcd_depth`, whose value is updated whenever the function's internal counter `curr_depth` exceeds `gcd_depth`'s stored value. `curr_depth` increments by `1` on routine entry and decrements by `1` before returning. `gcd_depth` is reset to `0` on every new top-level C harness call. 
+    - `gcd_asm(a, b)`: returns GCD of `a` and `b`
+    - `gcd_asm(a, 0)`: returns `a`
+    - `gcd_asm(0, b)`: returns `b`
+    - `gcd_asm(0, 0)`: returns `0`
+
 ### Solution architecture
 
 A stack frame diagram for one recursive call of `qsort_asm`, showing where the arguments, the return address, saved `ebp`, and the saved registers sit. Why `sum_range_asm` is reentrant.
