@@ -70,6 +70,8 @@ The four routines `bench.c` expects and what each one returns. Which registers y
   `sum_range_asm` before the first finishes. Both must return correct sums
   (500500 and 5050), so no state can live in a global.
 
+- **bsearch_asm:** `int bsearch_asm(int *arr, int n, int key)` runs a recursive binary search on a sorted array of signed ints. It returns 0-based index of `key` in `eax`, or `-1` if the key isn't found in the array. The midpoint is computed as `lo + (hi - lo) / 2` rather than just`(lo + hi) / 2`, because the sum `lo+hi` can overflow 32 bits for very large indices, while `hi - lo` never exceeds the array size. The base case is `lo > hi`, which returns `-1` and also covers the empty array (`n=0`).
+
 ### Solution architecture
 
 A stack frame diagram for one recursive call of `qsort_asm`, showing where the arguments, the return address, saved `ebp`, and the saved registers sit. Why `sum_range_asm` is reentrant.
