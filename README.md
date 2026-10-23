@@ -60,57 +60,33 @@ needs. Leave the rest of this file as it is.
 
 ## Design Notes
 
-Complete this section before the Week 1 progress report and finish it by
-Week 3. The syllabus asks for problem analysis, a solution architecture,
-and an estimated timeline. The manual's Deliverables section lists what
-this activity adds. Keep each part short. Update it when the plan changes.
-
 ### Problem analysis
 
-The four routines `bench.c` expects and what each one returns. Which
-registers you preserve and why.
+The four routines `bench.c` expects and what each one returns. Which registers you preserve and why.
 
-The program implements four C-callable assembly routines:
+- **sum_range_asm:** `int sum_range_asm(int lo, int hi)` returns the
+  inclusive sum in `eax`. The hard part is reentrancy: bench calls
+  `bench_callback()` once per call from C, and that callback starts a second
+  `sum_range_asm` before the first finishes. Both must return correct sums
+  (500500 and 5050), so no state can live in a global.
 
-- `qsort_asm(int *arr, int n)` sorts an array of signed 32-bit integers in ascending order in place. It does not return a value.
-- `bsearch_asm(int *arr, int n, int key)` recursively searches a sorted array and returns the index of `key`, or `-1` if the key is absent.
-- `gcd_asm(int a, int b)` recursively computes the greatest common divisor of two nonnegative integers and returns the result.
-- `sum_range_asm(int lo, int hi)` returns the inclusive sum of the integers from `lo` to `hi`, provided the result fits in a signed 32-bit integer.
-
-Under the cdecl calling convention, `ebx`, `esi`, `edi`, and `ebp` are callee-saved registers. Any routine that modifies these registers must restore their original values before returning. `eax`, `ecx`, and `edx` are caller-saved, while return values are placed in `eax`.
+- **bsearch_asm:** `int bsearch_asm(int *arr, int n, int key)` runs a recursive binary search on a sorted array of signed ints. It returns 0-based index of `key` in `eax`, or `-1` if the key isn't found in the array. The midpoint is computed as `lo + (hi - lo) / 2` rather than just`(lo + hi) / 2`, because the sum `lo+hi` can overflow 32 bits for very large indices, while `hi - lo` never exceeds the array size. The base case is `lo > hi`, which returns `-1` and also covers the empty array (`n=0`).
 
 ### Solution architecture
 
-A stack frame diagram for one recursive call of `qsort_asm`, showing where
-the arguments, the return address, saved `ebp`, and the saved registers
-sit. Why `sum_range_asm` is reentrant.
+A stack frame diagram for one recursive call of `qsort_asm`, showing where the arguments, the return address, saved `ebp`, and the saved registers sit. Why `sum_range_asm` is reentrant.
 
-`qsort_asm` will serve as the C-facing entry point for sorting and will call an internal recursive quicksort routine using explicit `lo` and `hi` bounds. The recursive routine will use Lomuto partitioning, with the last element of the current range as the pivot.
-
-A recursive stack frame will contain the arguments above `ebp`, followed by the return address and saved `ebp`. Any callee-saved registers used by the routine will also be saved on the stack and restored before returning.
-
-`sum_range_asm` will be reentrant by keeping all mutable state in registers and on the stack. It will not use changing values stored in `.data` or `.bss`, so overlapping calls will not overwrite each other's state.
-
-A recursive call will use a stack frame similar to the following:
-
-```text
-Higher addresses
-[ebp+16]  third argument
-[ebp+12]  second argument
-[ebp+8]   first argument
-[ebp+4]   return address
-[ebp]     saved ebp
-[ebp-4]   saved register
-[ebp-8]   saved register
-[ebp-12]  saved register
-Lower addresses
-```
+- **Why sum_range_asm is reentrant:** It keeps no globals. `lo`
+  and `hi` live in the call's own stack frame (`[ebp+8]`, `[ebp+12]`) and
+  the running total lives in a register or that frame, so the nested call
+  from `bench_callback()` gets its own frame and can't touch the outer
+  call's values. The callback runs once at entry, before any live value is
+  held in `eax`, `ecx` or `edx`.
 
 ### Measurements
 
 The ratio `bench` reports on `random1000.txt`, `sorted1000.txt`,
-`reverse1000.txt`, `duplicates.txt`, and `identical.txt`. Your worst case
-and its cause. One improvement and its estimated effect.
+`reverse1000.txt`, `duplicates.txt`, and `identical.txt`. Your worst case and its cause. One improvement and its estimated effect.
 
 | File | Ratio |
 |---|---|
@@ -127,11 +103,10 @@ who owns it.
 
 | Week | Goal | Owner |
 |---|---|---|
-| 1 | Design notes, cdecl review, repository setup, and subsystem planning | All members |
-| 2 | Complete Sorting and Searching subsystems | |
-| 3 | Complete Convention and Measurement subsystem, testing, benchmarks, and documentation | |
-| 4 | Defense | All members |
-
+| 1 | | |
+| 2 | | |
+| 3 | | |
+| 4 | Defense | |
 ## Subsystem Ownership
 
 Complete this section before the Week 1 progress report. The manual lists
@@ -139,10 +114,10 @@ the three subsystems. Each member owns one. In a group of four, two members
 share one. The commit history must agree with this table.
 
 | Subsystem | Owner |
-|---|---|
-| Sorting (`qsort_asm` and its partition) | |
-| Searching (`bsearch_asm`, `gcd_asm`) | |
-| Convention and measurement (`sum_range_asm`, the benchmarks) | |
+|---|---| 
+| Sorting (`qsort_asm` and its partition) | Ma. Christie Jude Tarre |
+| Searching (`bsearch_asm`, `gcd_asm`) | Trisha Mae Hechenagocia & Gabrielle Sumergido |
+| Convention and measurement (`sum_range_asm`, the benchmarks) | Aleighia Keith L. Reyes |
 
 ## Quirks and Issues
 
