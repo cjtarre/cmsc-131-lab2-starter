@@ -71,17 +71,15 @@ registers you preserve and why.
 
 - **`bsearch_asm`:** `int bsearch_asm(int *arr, int n, int key)` runs a recursive binary search on a sorted array of signed ints. It returns 0-based index of `key` in `eax`, or `-1` if the key isn't found in the array. The midpoint is computed as `lo + (hi - lo) / 2` rather than just `(lo + hi) / 2`, because the sum `lo+hi` can overflow 32 bits for very large indices, while `hi - lo` never exceeds the array size. The base case is `lo > hi`, which returns `-1` and also covers the empty array (`n=0`).
 
-- **`gcd_asm`:** _To be completed by the Searching subsystem owner._
-
-- **`sum_range_asm`:** `int sum_range_asm(int lo, int hi)` returns the inclusive sum in `eax`. The hard part is reentrancy: bench calls `bench_callback()` once per call from C, and that callback starts a second `sum_range_asm` before the first finishes. Both must return correct sums (500500 and 5050), so no state can live in a global.
-
-Under the cdecl calling convention, `eax`, `ecx`, and `edx` are caller-saved registers, while `ebx`, `esi`, `edi`, and `ebp` are callee-saved. Any callee-saved register modified by a routine must be restored before returning so the caller's values are preserved. Return values are placed in `eax`.
-
-- **gcd_asm**: `int gcd_asm(int a, int b)` runs a recursive Euclid algorithm to calculate the greatest common denominator of two nonnegative integers. It keeps track of the total recursive depth with an exported global variable `gcd_depth`, whose value is updated whenever the function's internal counter `curr_depth` exceeds `gcd_depth`'s stored value. `curr_depth` increments by `1` on routine entry and decrements by `1` before returning. `gcd_depth` is reset to `0` on every new top-level C harness call. 
+- **gcd_asm:** `int gcd_asm(int a, int b)` runs a recursive Euclid algorithm to calculate the greatest common divisor of two nonnegative integers. It keeps track of the total recursive depth with an exported global variable `gcd_depth`, whose value is updated whenever the function's internal counter `curr_depth` exceeds `gcd_depth`'s stored value. `curr_depth` increments by `1` on routine entry and decrements by `1` before returning. `gcd_depth` is reset to `0` on every new top-level C harness call. 
     - `gcd_asm(a, b)`: returns GCD of `a` and `b`
     - `gcd_asm(a, 0)`: returns `a`
     - `gcd_asm(0, b)`: returns `b`
     - `gcd_asm(0, 0)`: returns `0`
+
+- **`sum_range_asm`:** `int sum_range_asm(int lo, int hi)` returns the inclusive sum in `eax`. The hard part is reentrancy: bench calls `bench_callback()` once per call from C, and that callback starts a second `sum_range_asm` before the first finishes. Both must return correct sums (500500 and 5050), so no state can live in a global.
+
+Under the cdecl calling convention, `eax`, `ecx`, and `edx` are caller-saved registers, while `ebx`, `esi`, `edi`, and `ebp` are callee-saved. Any callee-saved register modified by a routine must be restored before returning so the caller's values are preserved. Return values are placed in `eax`.
 
 ### Solution architecture
 
