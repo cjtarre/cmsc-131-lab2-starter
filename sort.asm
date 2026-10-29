@@ -59,7 +59,6 @@ segment .text
         global  _qsort_asm
 _qsort_asm:
         enter   0,0
-        pusha
 
         ;
         ; TODO: sort.
@@ -69,7 +68,36 @@ _qsort_asm:
         ; arrays: n <= 1 sorts itself.
         ;
 
-        popa
-        mov     eax, 0
+        mov     ecx, [ebp+12]       ; ECX: n
+        cmp     ecx, 1
+        jle     .done               ; n <= 1 is already sorted
+
+        dec     ecx                 ; ECX: hi = n - 1
+
+        push    ecx                 ; hi
+        push    dword 0             ; lo = 0
+        push    dword [ebp+8]       ; arr
+        call    qsort_recursive
+        add     esp, 12             ; clean up three arguments
+
+.done:
+        xor     eax, eax
+        leave
+        ret
+
+
+qsort_recursive:
+        enter   0,0
+
+        mov     eax, [ebp+12]       ; EAX: lo
+        cmp     eax, [ebp+16]       ; compare lo and hi
+        jge     .done               ; lo >= hi: nothing to sort
+
+        ;
+        ; TODO: partition current range, then recursively sort
+        ;       lo..p-1 and p+1..hi.
+        ;
+
+.done:
         leave
         ret
