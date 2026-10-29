@@ -61,27 +61,25 @@ _qsort_asm:
         enter   0,0
 
         ;
-        ; TODO: sort.
-        ;
-        ; Remember the array elements are four bytes, so index with a *4
-        ; scale. The first thing to handle is the empty and single-element
-        ; arrays: n <= 1 sorts itself.
+        ; Set up the initial quicksort range.
+        ; Empty and single-element arrays are already sorted.
         ;
 
         mov     ecx, [ebp+12]       ; ECX: n
         cmp     ecx, 1
-        jle     .done               ; n <= 1 is already sorted
+        jle     .done               ; n <= 1: nothing to sort
 
         dec     ecx                 ; ECX: hi = n - 1
 
+        ; Start recursive quicksort with range [0, n - 1].
         push    ecx                 ; hi
         push    dword 0             ; lo = 0
         push    dword [ebp+8]       ; arr
         call    qsort_recursive
-        add     esp, 12             ; clean up three arguments
+        add     esp, 12             ; clean up three 4-byte arguments
 
 .done:
-        xor     eax, eax
+        xor     eax, eax            ; qsort_asm is void; EAX is not used as a return value
         leave
         ret
 
@@ -89,13 +87,17 @@ _qsort_asm:
 qsort_recursive:
         enter   4,0                 ; [ebp-4] stores pivot index p
 
+        ;
+        ; Stop when the current range has zero or one element.
+        ;
+
         mov     eax, [ebp+12]       ; EAX: lo
         cmp     eax, [ebp+16]       ; compare lo and hi
-        jge     .done               ; lo >= hi: nothing to sort
+        jge     .done               ; lo >= hi: range is already sorted
 
         ;
-        ; Partition current range, then recursively sort
-        ; lo..p-1 and p+1..hi.
+        ; Partition the current range around arr[hi].
+        ; partition returns the final pivot index p in EAX.
         ;
 
         push    dword [ebp+16]      ; hi
@@ -104,10 +106,10 @@ qsort_recursive:
         call    partition
         add     esp, 12             ; clean up three arguments
 
-        mov     [ebp-4], eax        ; save pivot index p
+        mov     [ebp-4], eax        ; save p across recursive calls
 
         ;
-        ; Recursively sort lo..p-1.
+        ; Recursively sort the left range: lo .. p - 1.
         ;
 
         mov     ecx, eax
@@ -120,7 +122,7 @@ qsort_recursive:
         add     esp, 12             ; clean up three arguments
 
         ;
-        ; Recursively sort p+1..hi.
+        ; Recursively sort the right range: p + 1 .. hi.
         ;
 
         mov     eax, [ebp-4]
@@ -141,28 +143,31 @@ partition:
         enter   16,0
 
         ;
-        ; Local values:
+        ; Lomuto partition locals:
         ; [ebp-4]  = i
         ; [ebp-8]  = pivot
         ; [ebp-12] = j
         ; [ebp-16] = temporary swap value
         ;
 
+        ; Use the last element of the range as the pivot.
         mov     eax, [ebp+16]       ; EAX: hi
         mov     ecx, [ebp+8]        ; ECX: arr
         mov     edx, [ecx+eax*4]    ; EDX: arr[hi]
         mov     [ebp-8], edx        ; pivot = arr[hi]
 
+        ; i marks the end of the <= pivot portion.
         mov     eax, [ebp+12]       ; EAX: lo
         dec     eax
         mov     [ebp-4], eax        ; i = lo - 1
 
+        ; j scans the range from lo through hi - 1.
         mov     eax, [ebp+12]
         mov     [ebp-12], eax       ; j = lo
 
 .loop:
         mov     eax, [ebp-12]       ; EAX: j
-        cmp     eax, [ebp+16]       ; j < hi?
+        cmp     eax, [ebp+16]       ; stop when j reaches hi
         jge     .after_loop
 
         mov     ecx, [ebp+8]        ; ECX: arr
@@ -170,15 +175,16 @@ partition:
         cmp     edx, [ebp-8]        ; compare arr[j] with pivot
         jg      .next               ; signed: skip if arr[j] > pivot
 
-        inc     dword [ebp-4]       ; i = i + 1
+        ;
+        ; arr[j] belongs on the <= pivot side.
+        ; Advance i and swap arr[i] with arr[j].
+        ;
 
-        ;
-        ; Swap arr[i] and arr[j].
-        ;
+        inc     dword [ebp-4]       ; i = i + 1
 
         mov     eax, [ebp-4]        ; EAX: i
         mov     edx, [ecx+eax*4]    ; EDX: arr[i]
-        mov     [ebp-16], edx       ; save arr[i]
+        mov     [ebp-16], edx       ; save old arr[i]
 
         mov     edx, [ebp-12]       ; EDX: j
         mov     edx, [ecx+edx*4]    ; EDX: arr[j]
@@ -194,7 +200,7 @@ partition:
 
 .after_loop:
         ;
-        ; Swap arr[i + 1] and arr[hi].
+        ; Put the pivot into its final sorted position at i + 1.
         ;
 
         mov     eax, [ebp-4]
@@ -202,18 +208,19 @@ partition:
 
         mov     ecx, [ebp+8]        ; ECX: arr
         mov     edx, [ecx+eax*4]    ; EDX: arr[p]
-        mov     [ebp-16], edx       ; save arr[p]
+        mov     [ebp-16], edx       ; save old arr[p]
 
         mov     edx, [ebp+16]       ; EDX: hi
-        mov     edx, [ecx+edx*4]    ; EDX: arr[hi]
+        mov     edx, [ecx+edx*4]    ; EDX: pivot at arr[hi]
         mov     [ecx+eax*4], edx    ; arr[p] = pivot
 
         mov     edx, [ebp+16]       ; EDX: hi
         mov     eax, [ebp-16]       ; EAX: old arr[p]
         mov     [ecx+edx*4], eax    ; arr[hi] = old arr[p]
 
+        ; Return the pivot's final index in EAX.
         mov     eax, [ebp-4]
-        inc     eax                 ; return p = i + 1 in EAX
+        inc     eax                 ; EAX: p = i + 1
 
         leave
         ret
