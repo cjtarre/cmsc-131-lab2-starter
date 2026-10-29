@@ -87,17 +87,133 @@ _qsort_asm:
 
 
 qsort_recursive:
-        enter   0,0
+        enter   4,0                 ; [ebp-4] stores pivot index p
 
         mov     eax, [ebp+12]       ; EAX: lo
         cmp     eax, [ebp+16]       ; compare lo and hi
         jge     .done               ; lo >= hi: nothing to sort
 
         ;
-        ; TODO: partition current range, then recursively sort
-        ;       lo..p-1 and p+1..hi.
+        ; Partition current range, then recursively sort
+        ; lo..p-1 and p+1..hi.
         ;
 
+        push    dword [ebp+16]      ; hi
+        push    dword [ebp+12]      ; lo
+        push    dword [ebp+8]       ; arr
+        call    partition
+        add     esp, 12             ; clean up three arguments
+
+        mov     [ebp-4], eax        ; save pivot index p
+
+        ;
+        ; Recursively sort lo..p-1.
+        ;
+
+        mov     ecx, eax
+        dec     ecx                 ; ECX: p - 1
+
+        push    ecx                 ; hi = p - 1
+        push    dword [ebp+12]      ; lo
+        push    dword [ebp+8]       ; arr
+        call    qsort_recursive
+        add     esp, 12             ; clean up three arguments
+
+        ;
+        ; Recursively sort p+1..hi.
+        ;
+
+        mov     eax, [ebp-4]
+        inc     eax                 ; EAX: p + 1
+
+        push    dword [ebp+16]      ; hi
+        push    eax                 ; lo = p + 1
+        push    dword [ebp+8]       ; arr
+        call    qsort_recursive
+        add     esp, 12             ; clean up three arguments
+
 .done:
+        leave
+        ret
+
+
+partition:
+        enter   16,0
+
+        ;
+        ; Local values:
+        ; [ebp-4]  = i
+        ; [ebp-8]  = pivot
+        ; [ebp-12] = j
+        ; [ebp-16] = temporary swap value
+        ;
+
+        mov     eax, [ebp+16]       ; EAX: hi
+        mov     ecx, [ebp+8]        ; ECX: arr
+        mov     edx, [ecx+eax*4]    ; EDX: arr[hi]
+        mov     [ebp-8], edx        ; pivot = arr[hi]
+
+        mov     eax, [ebp+12]       ; EAX: lo
+        dec     eax
+        mov     [ebp-4], eax        ; i = lo - 1
+
+        mov     eax, [ebp+12]
+        mov     [ebp-12], eax       ; j = lo
+
+.loop:
+        mov     eax, [ebp-12]       ; EAX: j
+        cmp     eax, [ebp+16]       ; j < hi?
+        jge     .after_loop
+
+        mov     ecx, [ebp+8]        ; ECX: arr
+        mov     edx, [ecx+eax*4]    ; EDX: arr[j]
+        cmp     edx, [ebp-8]        ; compare arr[j] with pivot
+        jg      .next               ; signed: skip if arr[j] > pivot
+
+        inc     dword [ebp-4]       ; i = i + 1
+
+        ;
+        ; Swap arr[i] and arr[j].
+        ;
+
+        mov     eax, [ebp-4]        ; EAX: i
+        mov     edx, [ecx+eax*4]    ; EDX: arr[i]
+        mov     [ebp-16], edx       ; save arr[i]
+
+        mov     edx, [ebp-12]       ; EDX: j
+        mov     edx, [ecx+edx*4]    ; EDX: arr[j]
+        mov     [ecx+eax*4], edx    ; arr[i] = arr[j]
+
+        mov     eax, [ebp-12]       ; EAX: j
+        mov     edx, [ebp-16]       ; EDX: old arr[i]
+        mov     [ecx+eax*4], edx    ; arr[j] = old arr[i]
+
+.next:
+        inc     dword [ebp-12]      ; j = j + 1
+        jmp     .loop
+
+.after_loop:
+        ;
+        ; Swap arr[i + 1] and arr[hi].
+        ;
+
+        mov     eax, [ebp-4]
+        inc     eax                 ; EAX: p = i + 1
+
+        mov     ecx, [ebp+8]        ; ECX: arr
+        mov     edx, [ecx+eax*4]    ; EDX: arr[p]
+        mov     [ebp-16], edx       ; save arr[p]
+
+        mov     edx, [ebp+16]       ; EDX: hi
+        mov     edx, [ecx+edx*4]    ; EDX: arr[hi]
+        mov     [ecx+eax*4], edx    ; arr[p] = pivot
+
+        mov     edx, [ebp+16]       ; EDX: hi
+        mov     eax, [ebp-16]       ; EAX: old arr[p]
+        mov     [ecx+edx*4], eax    ; arr[hi] = old arr[p]
+
+        mov     eax, [ebp-4]
+        inc     eax                 ; return p = i + 1 in EAX
+
         leave
         ret
