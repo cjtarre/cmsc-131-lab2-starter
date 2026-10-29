@@ -77,7 +77,7 @@ segment .text
 _gcd_asm:
         enter   0,0
 
-        inc     dword [gcd_depth]       ; increment counter on entry
+        inc     dword [_gcd_depth]       ; increment counter on entry
         mov     ecx, [ebp+12]           ; ECX: int b
         mov     eax, [ebp+8]            ; EAX: int a
 
