@@ -151,4 +151,4 @@ Complete this section before the Week 3 progress report. The syllabus asks for d
 
 ### Quirks
 
-- 
+- `gcd_asm` uses a static shared global counter `gcd_depth` which limits the function's re-entrancy; it assumes that recursive calls fall on a single thread. Being a shared global, it relies on a single fixed memory location rather than stack encapsulated which can risk it to be polluted mid-execution on concurrent thread executions, asynchronous calls, and other external read-write operations. While its internal initialization to 0 allows it to reset for multiple runs of `gcd`, it remains strictly non-reentrant and cannot support simultaneous (same-level) or overlapping calls.
