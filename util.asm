@@ -78,30 +78,30 @@ segment .text
 _gcd_asm:				; first call
 	mov	dword [_gcd_depth], 0	; reset to 0
 
-_gcd_recursive:				; recursive call (falls-through from call 1)
+_gcd_recursive:					; recursive call (falls-through from call 1)
 	enter   0,0
-	inc	dword [_gcd_depth]	; increment counter on entry
-	mov	ecx, [ebp+12]           ; ECX: int b
-	mov	eax, [ebp+8]            ; EAX: int a
+	inc	dword [_gcd_depth]		; increment counter on entry
+	mov	ecx, [ebp+12]			; ECX: int b
+	mov	eax, [ebp+8]			; EAX: int a
 
-	cmp	eax, 0                  ; edge case gcd(0, b)
+	cmp	eax, 0					; edge case gcd(0, b)
 	je	.return_b
 
-	cmp	ecx, 0                  ; if (b==0):
-	je	.gcd_end                ;       return a (EAX already has a)
+	cmp	ecx, 0					; if (b==0):
+	je	.gcd_end				;       return a (EAX already has a)
 
-	xor	edx, edx                ; clear edx for div
-	div	ecx                     ; edx:eax / ecx -> EDX holds (a % b)
-                                        
-	push	edx                     ; push a % b    as next b
-	push	ecx                     ; push b        as next a
+	xor	edx, edx				; clear edx for div
+	div	ecx						; edx:eax / ecx -> EDX holds (a % b)
 
-	call	_gcd_recursive			; recursive call
-	add	esp, 8                  ; clean up two arguments
-	jmp	.gcd_end                ; continue to end
+	push	edx					; push a % b    as next b
+	push	ecx					; push b        as next a
+
+	call	_gcd_recursive		; recursive call
+	add	esp, 8					; clean up two arguments
+	jmp	.gcd_end				; continue to end
 
 .return_b:
-	mov	eax, ecx                ; EAX: int b
+	mov	eax, ecx				; EAX: int b
 
 .gcd_end:
 	leave
