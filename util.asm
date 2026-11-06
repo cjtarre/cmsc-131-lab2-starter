@@ -74,37 +74,40 @@ _gcd_depth      resd    1
 segment .text
         global  _gcd_asm
         extern  _bench_callback
-_gcd_asm:
-        enter   0,0
 
-        inc     dword [gcd_depth]       ; increment counter on entry
-        mov     ecx, [ebp+12]           ; ECX: int b
-        mov     eax, [ebp+8]            ; EAX: int a
+_gcd_asm:				; first call
+	mov	dword [_gcd_depth], 0	; reset to 0
 
-        cmp     eax, 0                  ; edge case gcd(0, b)
-        je      .return_b
+_gcd_recursive:				; recursive call (falls-through from call 1)
+	enter   0,0
+	inc	dword [_gcd_depth]	; increment counter on entry
+	mov	ecx, [ebp+12]           ; ECX: int b
+	mov	eax, [ebp+8]            ; EAX: int a
 
-        cmp     ecx, 0                  ; if (b==0):
-        je      .gcd_end                ;       return a (EAX already has a)
+	cmp	eax, 0                  ; edge case gcd(0, b)
+	je	.return_b
 
-        xor     edx, edx                ; clear edx for div
-        div     ecx                     ; edx:eax / ecx -> EDX holds (a % b)
+	cmp	ecx, 0                  ; if (b==0):
+	je	.gcd_end                ;       return a (EAX already has a)
+
+	xor	edx, edx                ; clear edx for div
+	div	ecx                     ; edx:eax / ecx -> EDX holds (a % b)
                                         
-        push    edx                     ; push a % b    as next b
-        push    ecx                     ; push b        as next a
+	push	edx                     ; push a % b    as next b
+	push	ecx                     ; push b        as next a
 
-        call    _gcd_asm                ; recursive call
-        add     esp, 8                  ; clean up two arguments
-        jmp     .gcd_end                ; continue to end
+	call	_gcd_recursive			; recursive call
+	add	esp, 8                  ; clean up two arguments
+	jmp	.gcd_end                ; continue to end
 
 .return_b:
-        mov     eax, ecx                ; EAX: int b
+	mov	eax, ecx                ; EAX: int b
 
 .gcd_end:
-        leave
-        ret
-
-        global  _sum_range_asm
+	leave
+	ret
+	
+	global  _sum_range_asm
 _sum_range_asm:
         enter   0,0
         pusha
