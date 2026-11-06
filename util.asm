@@ -110,17 +110,32 @@ _gcd_recursive:					; recursive call (falls-through from call 1)
 	global  _sum_range_asm
 _sum_range_asm:
         enter   0,0
-        pusha
+        call    _bench_callback    ; once per call from C, never inside the recursion
+        push    dword [ebp+12]     ; hi
+        push    dword [ebp+8]      ; lo
+        call    sum_inner
+        add     esp, 8             ; clean up 2 args
+        leave
+        ret
 
-        ;
-        ; TODO: sum_range. Call bench_callback once, then recurse on
-        ; (lo + 1, hi) and add lo. The base case lo > hi is 0. Put the
-        ; recursion in a second routine that does not call bench_callback.
-        ; Keep every intermediate on the stack. A global counter or
-        ; accumulator here is what breaks reentrancy.
-        ;
+; internal: sum_inner(lo, hi), same stack layout as cdecl, so it's easy to reason about
+sum_inner:
+        enter   0,0
+        mov     eax, [ebp+8]       ; lo
+        cmp     eax, [ebp+12]      ; signed compare against hi
+        jg      .base
 
-        popa
-        mov     eax, 0
+        mov     ecx, eax           ; ecx = lo
+        inc     ecx                ; ecx = lo + 1
+        push    dword [ebp+12]     ; hi (pushed first, right to left)
+        push    ecx                ; lo + 1
+        call    sum_inner
+        add     esp, 8             ; clean up 2 args
+        add     eax, [ebp+8]       ; result += lo (reloaded from frame)
+        leave
+        ret
+
+.base:
+        xor     eax, eax           ; return 0
         leave
         ret
