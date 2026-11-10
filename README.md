@@ -96,11 +96,11 @@ Higher addresses
 [ebp+8]   array base
 [ebp+4]   return address
 [ebp]     saved ebp
-           saved registers / local values
+[ebp-4]   pivot index p
 Lower addresses
 ```
 
-The exact saved registers and local values will be updated once the final implementation is complete. Any callee-saved registers used by the routine must be restored before returning.
+The recursive quicksort routine uses `eax` and `ecx`, while the partition routine also uses `edx`. These are caller-saved registers under cdecl. Both routines preserve `ebp` through `enter` and `leave` and do not modify `ebx`, `esi`, or `edi`. The pivot index is stored at `[ebp-4]` so it remains available after the left recursive call.
 
 #### Reentrancy of `sum_range_asm`
 
@@ -113,11 +113,15 @@ The ratio `bench` reports on `random1000.txt`, `sorted1000.txt`,
 
 | File | Ratio |
 |---|---|
-| `random1000.txt` | |
-| `sorted1000.txt` | |
-| `reverse1000.txt` | |
-| `duplicates.txt` | |
-| `identical.txt` | |
+| `random1000.txt` | 0.80x |
+| `sorted1000.txt` | 51.11x |
+| `reverse1000.txt` | 37.86x |
+| `duplicates.txt` | 17.13x |
+| `identical.txt` | 33.55x |
+
+**Worst-case performance:** The highest measured ratio was 51.11x for `sorted1000.txt`. Since the implementation uses the last element as the pivot, an already sorted array produces highly unbalanced partitions. This results in O(n²) time complexity.
+
+**Possible improvement:** Choosing the median of the first, middle, and last elements as the pivot could produce more balanced partitions for sorted and reverse-sorted inputs. This may reduce their typical running time toward O(n log n), although the worst-case complexity remains O(n²). We retained the last-element pivot because it is required by the manual.
 
 ### Timeline
 
@@ -147,8 +151,12 @@ Complete this section before the Week 3 progress report. The syllabus asks for d
 
 ### Known issues
 
-- 
+- **Sorting (`qsort_asm`) - Initial sorting failure (Resolved):** The original routine was a stub and did not sort the input array. We implemented recursive quicksort using Lomuto partitioning and verified the results through the provided tests. All 9 sorting tests now pass.
 
 ### Quirks
+
+- **Sorting (`qsort_asm`) - Worst-case performance:** Sorted and reverse-sorted arrays produce unbalanced partitions because the last element is always selected as the pivot. This results in O(n²) time complexity. We retained this approach because it is required by the manual.
+
+- **Sorting (`qsort_asm`) - Duplicate and identical values:** The partition routine uses `<=` when comparing elements with the pivot. Equal values are placed in the left partition, which can lead to unbalanced partitions, especially when all elements are identical. The implementation still sorts these cases correctly, as confirmed by the tests.
 
 - `gcd_asm` uses a static shared global counter `gcd_depth` which limits the function's re-entrancy; it assumes that recursive calls fall on a single thread. Being a shared global, it relies on a single fixed memory location rather than stack encapsulated which can risk it to be polluted mid-execution on concurrent thread executions, asynchronous calls, and other external read-write operations. While its internal initialization to 0 allows it to reset for multiple runs of `gcd`, it remains strictly non-reentrant and cannot support simultaneous (same-level) or overlapping calls.
