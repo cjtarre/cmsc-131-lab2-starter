@@ -151,8 +151,12 @@ Complete this section before the Week 3 progress report. The syllabus asks for d
 
 ### Known issues
 
-- 
+- **Sorting (`qsort_asm`) - Initial sorting failure (Resolved):** The original routine was a stub and did not sort the input array. We implemented recursive quicksort using Lomuto partitioning and verified the results through the provided tests. All 9 sorting tests now pass.
 
 ### Quirks
+
+- **Sorting (`qsort_asm`) - Worst-case performance:** Sorted and reverse-sorted arrays produce unbalanced partitions because the last element is always selected as the pivot. This results in O(n²) time complexity. We retained this approach because it is required by the manual.
+
+- **Sorting (`qsort_asm`) - Duplicate and identical values:** The partition routine uses `<=` when comparing elements with the pivot. Equal values are placed in the left partition, which can lead to unbalanced partitions, especially when all elements are identical. The implementation still sorts these cases correctly, as confirmed by the tests.
 
 - `gcd_asm` uses a static shared global counter `gcd_depth` which limits the function's re-entrancy; it assumes that recursive calls fall on a single thread. Being a shared global, it relies on a single fixed memory location rather than stack encapsulated which can risk it to be polluted mid-execution on concurrent thread executions, asynchronous calls, and other external read-write operations. While its internal initialization to 0 allows it to reset for multiple runs of `gcd`, it remains strictly non-reentrant and cannot support simultaneous (same-level) or overlapping calls.
