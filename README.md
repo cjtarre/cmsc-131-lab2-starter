@@ -113,11 +113,15 @@ The ratio `bench` reports on `random1000.txt`, `sorted1000.txt`,
 
 | File | Ratio |
 |---|---|
-| `random1000.txt` | |
-| `sorted1000.txt` | |
-| `reverse1000.txt` | |
-| `duplicates.txt` | |
-| `identical.txt` | |
+| `random1000.txt` | 0.80x |
+| `sorted1000.txt` | 51.11x |
+| `reverse1000.txt` | 37.86x |
+| `duplicates.txt` | 17.13x |
+| `identical.txt` | 33.55x |
+
+**Worst-case performance:** The highest measured ratio was 51.11x for `sorted1000.txt`. Since the implementation uses the last element as the pivot, an already sorted array produces highly unbalanced partitions. This results in O(n²) time complexity.
+
+**Possible improvement:** Choosing the median of the first, middle, and last elements as the pivot could produce more balanced partitions for sorted and reverse-sorted inputs. This may reduce their typical running time toward O(n log n), although the worst-case complexity remains O(n²). We retained the last-element pivot because it is required by the manual.
 
 ### Timeline
 
