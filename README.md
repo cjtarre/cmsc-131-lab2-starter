@@ -96,11 +96,11 @@ Higher addresses
 [ebp+8]   array base
 [ebp+4]   return address
 [ebp]     saved ebp
-           saved registers / local values
+[ebp-4]   pivot index p
 Lower addresses
 ```
 
-The exact saved registers and local values will be updated once the final implementation is complete. Any callee-saved registers used by the routine must be restored before returning.
+The recursive quicksort routine uses `eax` and `ecx`, while the partition routine also uses `edx`. These are caller-saved registers under cdecl. Both routines preserve `ebp` through `enter` and `leave` and do not modify `ebx`, `esi`, or `edi`. The pivot index is stored at `[ebp-4]` so it remains available after the left recursive call.
 
 #### Reentrancy of `sum_range_asm`
 
